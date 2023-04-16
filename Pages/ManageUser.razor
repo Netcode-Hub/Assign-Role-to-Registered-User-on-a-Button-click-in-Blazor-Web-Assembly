@@ -1,0 +1,78 @@
+﻿@page "/manage-user"
+@using JWTDemo.Client.Service;
+@using JWTDemo.Shared
+@using JWTDemo.Shared.Models;
+@using Microsoft.AspNetCore.Authorization;
+@using Syncfusion.Blazor.DropDowns
+@inject IAuthService authService
+
+<div class="row">
+    <div class="col-md-4 offset-4">
+        <div class="alert alert-info">@Message</div>
+        <div class="card">
+            <div class="card-header">Assign Role</div>
+            <div class="card-body">
+                <EditForm Model="userRoleModel" OnValidSubmit="HandleAssignRole">
+                    <DataAnnotationsValidator></DataAnnotationsValidator> <ValidationSummary style="list-style:none;"></ValidationSummary>
+                    <div class="input-group">
+                        <SfDropDownList TValue="string" TItem="UserModel" Placeholder="Select User" DataSource="@users">
+                            <DropDownListFieldSettings Value="UserId" Text="Name"></DropDownListFieldSettings>
+                            <DropDownListEvents TValue="string" TItem="UserModel" ValueChange="OnValueChangeUser"></DropDownListEvents>
+                        </SfDropDownList>
+                        <ValidationMessage For="@(()=> userRoleModel.UserName)"></ValidationMessage>
+                    </div>
+                    <div class="input-group mt-3">
+                        <SfDropDownList TValue="string" TItem="RoleModel" Placeholder="Select Role" DataSource="@roles">
+                            <DropDownListFieldSettings Value="StringId" Text="Name"></DropDownListFieldSettings>
+                            <DropDownListEvents TValue="string" TItem="RoleModel" ValueChange="OnValueChangeRole"></DropDownListEvents>
+                        </SfDropDownList>
+                        <ValidationMessage For="@(()=> userRoleModel.RoleName)"></ValidationMessage>
+                    </div>
+                    <div class="input-group mt-3">
+                        <button class="btn btn-primary" type="submit"><span class="oi oi-plus"></span> Save</button>
+                    </div>
+                </EditForm>
+
+                <br />
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    List<RoleModel> roles = new();
+    List<UserModel> users = new();
+
+    UserRoleModel userRoleModel = new();
+    string Message = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        roles = await authService.GetRoles();
+        users = await authService.GetUsers();
+    }
+
+    public void OnValueChangeRole(ChangeEventArgs<string, RoleModel> args)
+    {
+        userRoleModel.RoleId = args.ItemData.StringId;
+        userRoleModel.RoleName = args.ItemData.Name;
+    }
+
+    public void OnValueChangeUser(ChangeEventArgs<string, UserModel> args)
+    {
+        userRoleModel.UserId = args.ItemData.UserId;
+        userRoleModel.UserName = args.ItemData.Name;
+    }
+
+    private async Task HandleAssignRole()
+    {
+        if (userRoleModel != null)
+        {
+            Message = "";
+            var result = await authService.AssignRole(userRoleModel);
+            Message = result.Message!;
+        }
+
+    }
+}
